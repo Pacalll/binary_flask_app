@@ -1,4 +1,5 @@
 import os
+import binary_analysis
 from flask import Flask, request, render_template, jsonify
 from flask_cors import CORS
 
@@ -18,6 +19,7 @@ def upload_file():
     if file.filename == '':
         return "error: no selected file"
     file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
+    print(binary_analysis.run_binary_analysis_rabin2(file))
     return jsonify({"message": "file uploaded successfully" })
 
 if __name__ == "__main__":
