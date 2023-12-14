@@ -10,7 +10,6 @@ CORS(app)
 @app.route("/")
 def start_page():
     return render_template("index.html")
-
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
@@ -19,8 +18,10 @@ def upload_file():
     if file.filename == '':
         return "error: no selected file"
     file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
-    print(binary_analysis.run_binary_analysis_rabin2(file))
-    return jsonify({"message": "file uploaded successfully" })
+    binary_analysis.run_binary_analysis_rabin2(file)
+    binary_analysis.run_binary_analysis_strace(file)
+    binary_analysis.run_binary_analysis_strings(file)
+    return jsonify({"message": "file uploaded successfully"})
 
 if __name__ == "__main__":
     app.run(debug=True)
