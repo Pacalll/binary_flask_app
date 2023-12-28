@@ -11,6 +11,98 @@
         <span class="drop-text">Drop your Binary here or click for upload</span>
         <input type="file" id="input" multiple>
     </div>
+    <div class="rabin2_table">
+        <table>
+            <thead>
+              <tr>
+                <th>Binaryname</th>
+                <th>Architektur</th>
+                <th>Baseadresse</th>
+                <th>Binarygröße</th>
+                <th>Binaryformat</th>
+                <th>Mode of Binary</th>
+                <th>Stackcanary gesetzt</th>
+                <th>is_stack_memory_protection</th>
+                <th>Binaryklasse</th>
+                <th>compiled</th>
+                <th>Compiler</th>
+                <th>verschlüsselt</th>
+                <th>DBG Datei</th>
+                <th>endian</th>
+                <th>havecode</th>
+                <th>guid</th>
+                <th>interpreter</th>
+                <th>load adress</th>
+                <th>Programmiersprache</th>
+                <th>linenum</th>
+                <th>lsyms</th>
+                <th>machine</th>
+                <th>is_nx</th>
+                <th>Betriebssystem</th>
+                <th>cc</th>
+                <th>is_pic</th>
+                <th>relocs</th>
+                <th>relro</th>
+                <th>rpath</th>
+                <th>is_sanitized</th>
+                <th>is_static_linked</th>
+                <th>is_stripped</th>
+                <th>subsys</th>
+                <th>is_va</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%  for rabin2 in rabin2 %}
+              <tr>
+                <td> {{ rabin2[0] }}</td>
+                <td> {{ rabin2[1] }}</td>
+                <td> {{ rabin2[2] }}</td>
+                <td> {{ rabin2[3] }}</td>
+                <td> {{ rabin2[4] }}</td>
+                <td> {{ rabin2[5] }}</td>
+                <td> {{ rabin2[6] }}</td>
+                <td> {{ rabin2[7] }}</td>
+                <td> {{ rabin2[8] }}</td>
+                <td> {{ rabin2[9] }}</td>
+                <td> {{ rabin2[10] }}</td>
+                <td> {{ rabin2[11] }}</td>
+                <td> {{ rabin2[12] }}</td>
+                <td> {{ rabin2[13] }}</td>
+                <td> {{ rabin2[14] }}</td>
+                <td> {{ rabin2[15] }}</td>
+                <td> {{ rabin2[16] }}</td>
+                <td> {{ rabin2[17] }}</td>
+                <td> {{ rabin2[18] }}</td>
+                <td> {{ rabin2[19] }}</td>
+                <td> {{ rabin2[20] }}</td>
+                <td> {{ rabin2[21] }}</td>
+                <td> {{ rabin2[22] }}</td>
+                <td> {{ rabin2[23] }}</td>
+                <td> {{ rabin2[24] }}</td>
+                <td> {{ rabin2[25] }}</td>
+                <td> {{ rabin2[26] }}</td>
+                <td> {{ rabin2[27] }}</td>
+                <td> {{ rabin2[28] }}</td>
+                <td> {{ rabin2[29] }}</td>
+                <td> {{ rabin2[30] }}</td>
+                <td> {{ rabin2[31] }}</td>
+                <td> {{ rabin2[32] }}</td>
+                <td> {{ rabin2[33] }}</td>
+              </tr>
+              {%  endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="syscall_table">
+        <h1>Syscalls:</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                </tr>
+            </thead>
+        </table>
+    </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

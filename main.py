@@ -9,7 +9,10 @@ CORS(app)
 
 @app.route("/")
 def start_page():
-    return render_template("index.html")
+    rabin2 = binary_analysis.get_binary_analysis("binary_info_rabin2")
+    strace = binary_analysis.get_binary_analysis("binary_info_strace")
+    strings = binary_analysis.get_binary_analysis("binary_info_strings")
+    return render_template("index.html", rabin2=rabin2, strace=strace, strings=strings)
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:

@@ -1,6 +1,6 @@
 #dropzone{
-    width: 340px;
-    height: 340px;
+    width: auto;
+    height: 200px;
     color: rgb(0,0,0);
     border: 4px dashed #5bc0de;
     padding: 3rem;
@@ -12,6 +12,11 @@
     text-align: center;
 }
 
-input{
+input {
     display: none;
+}
+.rabin2_table{
+
+}
+.syscall_table{
 }

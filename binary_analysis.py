@@ -211,3 +211,21 @@ def run_binary_analysis_strings(file):
     except Exception as e:
         print(f"Error: Cant insert data into string table!")
 
+
+def get_binary_analysis(table_name):
+    try:
+        connection = sqlite3.connect("binary_meta.db")
+        cursor = connection.cursor()
+        query = f"SELECT * FROM {table_name};"
+        cursor.execute(query)
+        data = (cursor.fetchall())
+        cursor.close()
+        return data
+    except Exception as e:
+        print(f"Error: cannot connect to database!")
+        return False
+    finally:
+        connection.close()
+
+def calc_syscalls(binary):
+    return
