@@ -9,10 +9,10 @@ CORS(app)
 
 @app.route("/")
 def start_page():
-    rabin2 = binary_analysis.get_binary_analysis("binary_info_rabin2")
-    strace = binary_analysis.get_binary_analysis("binary_info_strace")
-    strings = binary_analysis.get_binary_analysis("binary_info_strings")
-    return render_template("index.html", rabin2=rabin2, strace=strace, strings=strings)
+    #rabin2 = binary_analysis.get_binary_analysis("binary_info_rabin2")
+    #strace = binary_analysis.get_binary_analysis("binary_info_strace")
+    #strings = binary_analysis.get_binary_analysis("binary_info_strings")
+    return render_template("index.html") #rabin2=rabin2, strace=strace, strings=strings)
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
@@ -21,9 +21,7 @@ def upload_file():
     if file.filename == '':
         return "error: no selected file"
     file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
-    binary_analysis.run_binary_analysis_rabin2(file)
-    binary_analysis.run_binary_analysis_strace(file)
-    binary_analysis.run_binary_analysis_strings(file)
+    binary_analysis.run_binary_analysis(file)
     return jsonify({"message": "file uploaded successfully"})
 
 if __name__ == "__main__":

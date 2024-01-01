@@ -1,10 +1,11 @@
 import json
 import sqlite3
 import subprocess
+from datetime import datetime
 import parser
 
 
-def run_binary_analysis_rabin2(file):
+def run_binary_analysis_rabin2(file, binary_id):
     command = f"chmod +x uploads/{file.filename};rabin2 -Ij uploads/{file.filename}"
     try:
         data = subprocess.check_output(command , shell=True, universal_newlines=True)
@@ -19,7 +20,7 @@ def run_binary_analysis_rabin2(file):
         return False
     cursor.execute("""
             CREATE TABLE IF NOT EXISTS binary_info_rabin2(
-                binary text,
+                binary_id number,
                 architecture text,
                 baseaddr text,
                 size_of_binary text,
@@ -59,8 +60,8 @@ def run_binary_analysis_rabin2(file):
     meta_data_python_dict = json.loads(data)['info']
     #TODO check if uploaded file is binary ?!?
     cursor.execute("""
-                INSERT INTO binary_info_rabin2 (
-                     binary,
+                INSERT INTO binary_info_rabin2(
+                     binary_id,
                      architecture,
                      baseaddr,
                      size_of_binary,
@@ -97,7 +98,7 @@ def run_binary_analysis_rabin2(file):
                      checksums
 
                 )VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""", (
-        file.filename,
+        binary_id,
         meta_data_python_dict["arch"],
         meta_data_python_dict["baddr"],
         meta_data_python_dict["binsz"],
@@ -135,22 +136,22 @@ def run_binary_analysis_rabin2(file):
     ))
     connection.commit()
     connection.close()
-def run_binary_analysis_strace(file):
+def run_binary_analysis_strace(file,binary_id):
     command = f"chmod +x uploads/{file.filename};strace uploads/{file.filename}"
     try:
         data = subprocess.check_output(command, shell=True, universal_newlines=True,stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        print(f"Error: Cant execute strace command or with errors !")
+        print(f"Error: Cant execute strace command or with errors ! {e}")
         return False
     data_parsed = parser.parse_strace_output(data)
     # connect to db and create cursor obj.
     try:
         conn = sqlite3.connect('binary_meta.db')
         cursor = conn.cursor()
-
         # create sql table if not exists
         cursor.execute("""
                 CREATE TABLE IF NOT EXISTS binary_info_strace(
+                    binary_id number,
                     syscall text,
                     arguments text, 
                     result text          
@@ -161,17 +162,19 @@ def run_binary_analysis_strace(file):
     for syscall in data_parsed:
         cursor.execute("""
                             INSERT INTO binary_info_strace (
+                                binary_id,
                                 syscall,
                                 arguments,
                                 result
-                        )VALUES (?,?,?)""", (
+                        )VALUES (?,?,?,?)""", (
+            binary_id,
             syscall["syscall_name"],
             syscall["syscall_args"],
             syscall["syscall_result"]
         ))
     conn.commit()
     conn.close()
-def run_binary_analysis_strings(file):
+def run_binary_analysis_strings(file, binary_id):
     command = f"chmod +x uploads/{file.filename};strings uploads/{file.filename}"
     try:
         data = subprocess.check_output(command, shell=True, universal_newlines=True)
@@ -185,6 +188,7 @@ def run_binary_analysis_strings(file):
     try:
         cursor.execute("""
            CREATE TABLE IF NOT EXISTS binary_info_strings(
+               binary_id number, 
                paddr text,
                vaddr text,
                length number,
@@ -203,13 +207,86 @@ def run_binary_analysis_strings(file):
         #for every line (ascii string) split at the end and insert into db table
         for line in data.split("\n"):
                     cursor.execute('''
-                    INSERT INTO binary_info_strings(string)
-                    VALUES (?) 
-                    ''',(line,))
+                    INSERT INTO binary_info_strings(
+                        binary_id,
+                        string)
+                    VALUES (?,?) 
+                    ''',(
+                        binary_id,
+                        line,))
         conn.commit()
         conn.close()
     except Exception as e:
-        print(f"Error: Cant insert data into string table!")
+        print(f"Error: Cant insert data into string table! {e}")
+def run_binary_analysis_library(file,binary_id):
+    command = f"chmod +x uploads/{file.filename};rabin2 -lj uploads/{file.filename}"
+    try:
+        data = subprocess.check_output(command, shell=True, universal_newlines=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Cant execute rabin2 command for libraries or with errors !")
+    try:
+        conn = sqlite3.connect('binary_meta.db')
+        cursor = conn.cursor()
+    except Exception as e:
+        print(f"Error: Cant connect to db!!")
+    try:
+        cursor.execute("""
+               CREATE TABLE IF NOT EXISTS library(   
+                   binary_id number, 
+                   library_name text
+            );
+            """)
+    except Exception as e:
+        print(f"Error: Cant create table for library!!")
+    try:
+        # for every line (ascii string) split at the end and insert into db table
+        data = json.loads(data)
+        libary_names = data.get("libs",[])
+        for line in libary_names:
+            cursor.execute('''
+                        INSERT INTO library(
+                            binary_id,
+                            library_name
+                        )
+                        VALUES (?,?) 
+                        ''', (
+                    binary_id,
+                    line,))
+        conn.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        conn.close()
+def run_binary_create_binary_table(file):
+    name = file.filename
+    time_of_analysis = datetime.now()
+    try:
+        conn = sqlite3.connect('binary_meta.db')
+        cursor = conn.cursor()
+    except Exception as e:
+        print(f"Error: Cant connect to db!!")
+        return
+    try:
+        cursor.execute("""
+               CREATE TABLE IF NOT EXISTS binary(   
+                   binary_id Integer PRIMARY KEY, 
+                   binary_name text, 
+                   time_of_analysis date
+            );
+            """)
+        cursor.execute("""
+                   INSERT INTO binary (
+                                binary_name,
+                                time_of_analysis
+                        )VALUES (?,?)""",
+                       (name, time_of_analysis))
+        conn.commit()
+        binary_id = cursor.lastrowid
+    except Exception as e:
+        print(f"Error: {e}")
+    finally:
+        conn.close()
+    return binary_id
 
 
 def get_binary_analysis(table_name):
@@ -229,3 +306,10 @@ def get_binary_analysis(table_name):
 
 def calc_syscalls(binary):
     return
+
+def run_binary_analysis(binary):
+    binary_id = run_binary_create_binary_table(binary)
+    run_binary_analysis_rabin2(binary, binary_id)
+    run_binary_analysis_strace(binary, binary_id)
+    run_binary_analysis_strings(binary, binary_id)
+    run_binary_analysis_library(binary, binary_id)
