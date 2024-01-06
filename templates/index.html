@@ -12,6 +12,7 @@
         <input type="file" id="input" multiple>
     </div>
     <div class="rabin2_table">
+         <h1>Header:</h1>
         <table>
             <thead>
               <tr>
@@ -52,6 +53,7 @@
               </tr>
             </thead>
             <tbody>
+              {%  if rabin2 %}
               {%  for rabin2 in rabin2 %}
               <tr>
                 <td> {{ rabin2[0] }}</td>
@@ -90,6 +92,7 @@
                 <td> {{ rabin2[33] }}</td>
               </tr>
               {%  endfor %}
+              {%  endif %}
             </tbody>
         </table>
     </div>
@@ -98,10 +101,67 @@
         <table>
             <thead>
                 <tr>
-                    <th></th>
-                </tr>
+                    <th>Binary_ID</th>
+                    <th>Systemcall</th>
+                    <th>Arguments</th>
+                    <th>Rückgabewert</th>
             </thead>
+            <tbody>
+              {%  if strace %}
+              {%  for sys in strace %}
+              <tr>
+                <td> {{ sys[0] }}</td>
+                <td> {{ sys[1] }}</td>
+                <td> {{ sys[2] }}</td>
+                <td> {{ sys[3] }}</td>
+              </tr>
+              {%  endfor %}
+              {%  endif %}
+            </tbody>
         </table>
+    </div>
+    <div class="strings_table">
+        <h1>Zeichenketten:</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Binary_ID</th>
+                    <th>Zeichenkette</th>
+            </thead>
+            <tbody>
+              {%  if strings %}
+              {%  for string in strings %}
+              <tr>
+                <td> {{ string[0] }}</td>
+                <td> {{ string[7] }}</td>
+              </tr>
+              {%  endfor %}
+              {%  endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="lib_table">
+        <h1>Libs:</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Binary_ID</th>
+                    <th>Libraryname</th>
+            </thead>
+            <tbody>
+              {%  if libs %}
+              {%  for lib in libs %}
+              <tr>
+                <td> {{ lib[0] }}</td>
+                <td> {{ lib[1] }}</td>
+              </tr>
+              {%  endfor %}
+              {%  endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="syscall_overview">
+
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

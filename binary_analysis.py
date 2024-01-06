@@ -287,8 +287,6 @@ def run_binary_create_binary_table(file):
     finally:
         conn.close()
     return binary_id
-
-
 def get_binary_analysis(table_name):
     try:
         connection = sqlite3.connect("binary_meta.db")
