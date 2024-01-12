@@ -13,7 +13,13 @@ def start_page():
     strace = binary_analysis.get_binary_analysis("binary_info_strace")
     strings = binary_analysis.get_binary_analysis("binary_info_strings")
     libs = binary_analysis.get_binary_analysis("library")
-    return render_template("index.html", rabin2=rabin2, strace=strace, strings=strings, libs=libs)
+    syscall_images = [f for f in os.listdir("static") if f.startswith("syscall_overview_image")]
+    return render_template("index.html",
+                           rabin2=rabin2,
+                           strace=strace,
+                           strings=strings,
+                           libs=libs,
+                           syscall_images=syscall_images)
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:

@@ -102,6 +102,7 @@
             <thead>
                 <tr>
                     <th>Binary_ID</th>
+                    <th>Kategorie_ID</th>
                     <th>Systemcall</th>
                     <th>Arguments</th>
                     <th>Rückgabewert</th>
@@ -114,6 +115,7 @@
                 <td> {{ sys[1] }}</td>
                 <td> {{ sys[2] }}</td>
                 <td> {{ sys[3] }}</td>
+                <td> {{ sys[4] }}</td>
               </tr>
               {%  endfor %}
               {%  endif %}
@@ -161,7 +163,11 @@
         </table>
     </div>
     <div class="syscall_overview">
-
+        <h1>Syscall Overview:</h1>
+        {%  for img in syscall_images %}
+            <img src="{{ url_for('static', filename=img)}}" alt="Syscall Kuchendiagram">
+            <br>
+        {%  endfor %}
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

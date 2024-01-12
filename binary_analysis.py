@@ -2,7 +2,9 @@ import json
 import sqlite3
 import subprocess
 from datetime import datetime
+import matplotlib.pyplot as plt
 import parser
+import angr
 
 
 def run_binary_analysis_rabin2(file, binary_id):
@@ -10,7 +12,7 @@ def run_binary_analysis_rabin2(file, binary_id):
     try:
         data = subprocess.check_output(command , shell=True, universal_newlines=True)
     except subprocess.CalledProcessError as e:
-        print(f"Error: Cant execute rabin2 command or with errors !")
+        print(f"Error: Cant execute rabin2 command or with errors !{e}")
         return False
     try:
         connection = sqlite3.connect("binary_meta.db")
@@ -152,6 +154,7 @@ def run_binary_analysis_strace(file,binary_id):
         cursor.execute("""
                 CREATE TABLE IF NOT EXISTS binary_info_strace(
                     binary_id number,
+                    categorie_id,
                     syscall text,
                     arguments text, 
                     result text          
@@ -160,14 +163,17 @@ def run_binary_analysis_strace(file,binary_id):
     except Exception as e:
         print(f"Error: Cant create table for strace!!")
     for syscall in data_parsed:
+        categorie_id = get_syscall_categorie_for_syscall(syscall["syscall_name"])
         cursor.execute("""
                             INSERT INTO binary_info_strace (
                                 binary_id,
+                                categorie_id,
                                 syscall,
                                 arguments,
                                 result
-                        )VALUES (?,?,?,?)""", (
+                        )VALUES (?,?,?,?,?)""", (
             binary_id,
+            categorie_id,
             syscall["syscall_name"],
             syscall["syscall_args"],
             syscall["syscall_result"]
@@ -237,7 +243,7 @@ def run_binary_analysis_library(file,binary_id):
             );
             """)
     except Exception as e:
-        print(f"Error: Cant create table for library!!")
+        print(f"Error: Cant create table for library! {e}")
     try:
         # for every line (ascii string) split at the end and insert into db table
         data = json.loads(data)
@@ -297,13 +303,70 @@ def get_binary_analysis(table_name):
         cursor.close()
         return data
     except Exception as e:
-        print(f"Error: cannot connect to database!")
+        print(f"Error: cannot connect to database! {e}")
         return False
     finally:
         connection.close()
 
-def calc_syscalls(binary):
-    return
+def create_table_syscall_categories():
+    try:
+        conn = sqlite3.connect('binary_meta.db')
+        cursor = conn.cursor()
+
+        # Create table if not exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS syscall_categories (
+                categorie_id INTEGER PRIMARY KEY,
+                categorie TEXT       
+            )
+        """)
+        cursor.execute("SELECT COUNT(*) FROM syscall_categories;")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            # Insert data into the table
+            cursor.execute("""
+                INSERT INTO syscall_categories (categorie) VALUES (?),(?),(?),(?),(?),(?)
+            """, ('Netzwerk', 'Prozessmanagement', "Dateimanagement", "Gerätemanagement", "Systeminformationen","Sonstige"))
+        conn.commit()
+
+    except Exception as e:
+            print(f"Error: Can't create table for syscall categories! {e}")
+    finally:
+            conn.close()
+def get_syscall_categorie_for_syscall(syscall):
+    #TODO create a db table for this
+    syscall_to_category = {
+        'accept': 1,
+        'close': 1,
+        'open': 1
+    }
+    return syscall_to_category.get(syscall, 0)
+def calculate_syscall_overview(binary_id):
+    try:
+        connection = sqlite3.connect("binary_meta.db")
+        cursor = connection.cursor()
+        sum_all_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id = {str(binary_id)};").fetchone()[0]
+        sum_all_network_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 1;").fetchone()[0]
+
+
+        cursor.close()
+        calculate_syscall_overview_image([sum_all_network_syscall, sum_all_syscall], binary_id)
+        print(sum_all_syscall)
+        print(sum_all_network_syscall)
+
+    except Exception as e:
+        print(f"Error: cannot connect to database! {e}")
+        return False
+    finally:
+        connection.close()
+
+def calculate_syscall_overview_image(syscall_list,binary_id):
+    syscall_categories = ["Netzwerk", ""]
+    fig, ax = plt.subplots()
+    ax.pie(syscall_list, labels=syscall_categories)
+    path_of_syscall_image = f"static/syscall_overview_image{binary_id}.png"
+    plt.savefig(path_of_syscall_image, format="PNG")
+    plt.close()
 
 def run_binary_analysis(binary):
     binary_id = run_binary_create_binary_table(binary)
@@ -311,3 +374,8 @@ def run_binary_analysis(binary):
     run_binary_analysis_strace(binary, binary_id)
     run_binary_analysis_strings(binary, binary_id)
     run_binary_analysis_library(binary, binary_id)
+    create_table_syscall_categories()
+    calculate_syscall_overview(binary_id)
+
+
+
