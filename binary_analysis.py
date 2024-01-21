@@ -164,7 +164,7 @@ def run_binary_analysis_strace(container, file,binary_id):
         cursor.execute("""
                 CREATE TABLE IF NOT EXISTS binary_info_strace(
                     binary_id number,
-                    categorie_id,
+                    categorie_id number,
                     syscall text,
                     arguments text, 
                     result text          
@@ -336,37 +336,61 @@ def create_table_syscall_categories():
         if count == 0:
             # Insert data into the table
             cursor.execute("""
-                INSERT INTO syscall_categories (categorie) VALUES (?),(?),(?),(?),(?),(?)
-            """, ('Netzwerk', 'Prozessmanagement', "Dateimanagement", "Gerätemanagement", "Systeminformationen","Sonstige"))
+                INSERT INTO syscall_categories (categorie) VALUES (?),(?),(?),(?),(?),(?),(?)
+            """, ('Netzwerk', 'Prozessmanagement', "Dateimanagement", "Gerätemanagement", "Systeminformationen", 'Speichermanagement' ,"Sonstige"))
         conn.commit()
     except Exception as e:
             print(f"Error: Can't create table for syscall categories! {e}")
     finally:
+            cursor.close()
             conn.close()
 def get_syscall_categorie_for_syscall(syscall):
-    #TODO create a db table for this
-    syscall_to_category = {
-        'accept': 1,
-        'close': 1,
-        'open': 1
-    }
-    return syscall_to_category.get(syscall, 0)
+    try:
+        conn = sqlite3.connect("binary_meta.db")
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT category_id FROM syscall_to_categories WHERE syscall_name = ?", (syscall,))
+            result = cursor.fetchone()
+            return result[0] if result else 0
+        except Exception as e:
+            print(f"Error: Can't get category_id for syscall ! {e}")
+            return False
+    except Exception as e:
+        print(f"Error: Can't connect to db ! {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 def calculate_syscall_overview(binary_id):
     try:
         connection = sqlite3.connect("binary_meta.db")
         cursor = connection.cursor()
         sum_all_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id = {str(binary_id)};").fetchone()[0]
-        sum_all_network_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 1;").fetchone()[0]
-        calculate_syscall_overview_image([sum_all_network_syscall, sum_all_syscall], binary_id)
-        cursor.close()
+        sum_network_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 1;").fetchone()[0]
+        sum_processmgr_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 2;").fetchone()[0]
+        sum_filemgr_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 3;").fetchone()[0]
+        sum_devicemgr_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id  = {str(binary_id)} and categorie_id = 4;").fetchone()[0]
+        sum_sysmgr_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id = {str(binary_id)} and categorie_id = 5;").fetchone()[0]
+        sum_memory_sycall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id = {str(binary_id)} and categorie_id = 6;").fetchone()[0]
+        sum_somethingelse_syscall = cursor.execute(f"SELECT COUNT(*) FROM binary_info_strace WHERE binary_id = {str(binary_id)} and categorie_id = 7;").fetchone()[0]
+        calculate_syscall_overview_image([sum_network_syscall,
+                                                   sum_processmgr_syscall,
+                                                   sum_filemgr_syscall,
+                                                   sum_all_syscall,
+                                                   sum_devicemgr_syscall,
+                                                   sum_sysmgr_syscall,
+                                                   sum_memory_sycall,
+                                                   sum_somethingelse_syscall], binary_id)
     except Exception as e:
         print(f"Error: cannot connect to database! {e}")
         return False
     finally:
+        cursor.close()
         connection.close()
 
+
 def calculate_syscall_overview_image(syscall_list,binary_id):
-    syscall_categories = ["Netzwerk", ""]
+    syscall_categories = ["Netzwerk", "Prozess", "Filemanagment", "Devicemanagment,", "Systemmanagment", "Memorymanagment", "sonstiges", "fsjdlfds"]
     fig, ax = plt.subplots()
     ax.pie(syscall_list, labels=syscall_categories)
     path_of_syscall_image = f"static/syscall_overview_image{binary_id}.png"
@@ -377,19 +401,43 @@ def create_table_syscall_to_categorie():
     try:
         conn = sqlite3.connect('binary_meta.db')
         cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS syscall_to_categories (
+                    syscall_name TEXT PRIMRY KEY,
+                    category_id INTEGER       
+                )
+            """)
+        except Exception as e:
+            print(f"Error: cannot create table for syscall_to_categories! {e}")
+            return False
     except Exception as e:
         print(f"Error: cannot connect to database! {e}")
         return False
+    finally:
+        cursor.close()
+        conn.close()
+    return True
+def insert_syscall_category(syscall, category_id):
     try:
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS syscall_to_categories (
-                syscall_id INTEGER PRIMARY KEY,
-                syscallname TEXT,
-                category_id INTEGER       
-            )
-        """)
+        conn = sqlite3.connect('binary_meta.db')
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT COUNT(*) FROM syscall_to_categories WHERE syscall_name = ?", (syscall,))
+            count = cursor.fetchone()[0]
+            if count ==0:
+                cursor.execute("INSERT INTO syscall_to_categories ("
+                           "syscall_name,"
+                           " category_id) VALUES (?, ?)",
+                           (syscall, category_id))
+                conn.commit()
+        except Exception as e:
+            print(f"Cant insert syscall into table ! {e}")
     except Exception as e:
-        print(f"Error: cannot create datatable for syscall_to_categories! {e}")
+        print(f"Cant connect to database! {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 def start_docker_container():
     source_path = os.path.abspath(f"uploads/")
@@ -411,14 +459,26 @@ def stop_and_remove_container(container):
 def run_binary_analysis(binary):
     container = start_docker_container()
     binary_id = run_binary_create_binary_table(binary)
-
+    create_table_syscall_to_categorie()
+    insert_syscall_category("accept", 1)
+    insert_syscall_category("close", 3)
+    insert_syscall_category("open",3)
+    insert_syscall_category("arch_prctl",5)
+    insert_syscall_category("brk",5)
+    insert_syscall_category("execve", 2)
+    insert_syscall_category("access", 3)
+    insert_syscall_category("read", 3)
+    insert_syscall_category("newfstatat",3)
+    insert_syscall_category("pread64", 6)
+    insert_syscall_category("mmap", 6)
+    insert_syscall_category("mprotect",6)
     run_binary_analysis_rabin2(container, binary, binary_id)
     run_binary_analysis_strace(container, binary, binary_id)
     run_binary_analysis_strings(container, binary, binary_id)
     run_binary_analysis_library(container, binary, binary_id)
 
-    #create_table_syscall_categories()
-    #calculate_syscall_overview(binary_id)
+    create_table_syscall_categories()
+    calculate_syscall_overview(binary_id)
     stop_and_remove_container(container)
 
 
