@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <title>Dateiupload mit Drag-and-Drop</title>
+    <title>Meta Binary Analysis</title>
 </head>
 <body>
     <div id="dropzone">
@@ -135,7 +135,7 @@
               {%  for string in strings %}
               <tr>
                 <td> {{ string[0] }}</td>
-                <td> {{ string[7] }}</td>
+                <td> {{ string[1] }}</td>
               </tr>
               {%  endfor %}
               {%  endif %}
