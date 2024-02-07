@@ -8,7 +8,7 @@ def parse_strace_output(data):
     # mmap = syscallname
     # everything inside () are arguments for the specific syscall
     # 0x7f5e2eabc000 is return value for syscall
-    syscall_pattern = re.compile(r'(\w+)\(([^)]*)\)\s*=\s*([^ ]+)$')
+    syscall_pattern = re.compile(r'(\w+)\((.*)\)\s*=\s*(.*)')
     syscall_list_sanitized = []
 
     for item in syscall_list:

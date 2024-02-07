@@ -5,7 +5,7 @@ from flask import Flask, request, render_template, jsonify
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "./uploads"
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def start_page():
     rabin2 = binary_analysis.get_binary_analysis("binary_info_rabin2")
     strace = binary_analysis.get_binary_analysis("binary_info_strace")
@@ -21,7 +21,7 @@ def start_page():
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({"error": "file uploaded successfully" })
+        return jsonify({"error": "file not uploaded successfully" })
     file = request.files['file']
     if file.filename == '':
         return "error: no selected file"

@@ -1,5 +1,5 @@
 # Use ubuntu as image
-FROM debian:bullseye-slim
+FROM ubuntu:22.04
 
 # install git, make, strace and gcc
 RUN apt-get update && apt-get upgrade -y

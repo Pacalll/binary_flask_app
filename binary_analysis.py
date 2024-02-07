@@ -313,12 +313,12 @@ def get_binary_analysis(table_name):
         query = f"SELECT * FROM {table_name};"
         cursor.execute(query)
         data = (cursor.fetchall())
-        cursor.close()
         return data
     except Exception as e:
         print(f"Error: cannot connect to database! {e}")
         return False
     finally:
+        cursor.close()
         connection.close()
 
 def create_table_syscall_categories():
@@ -461,7 +461,8 @@ def run_binary_analysis(binary):
     create_table_syscall_to_category()
     insert_syscall_category("accept", 1)
     insert_syscall_category("close", 3)
-    insert_syscall_category("connect", 3)
+    insert_syscall_category("connect", 1)
+    insert_syscall_category("socket",1)
     insert_syscall_category("open",3)
     insert_syscall_category("arch_prctl",5)
     insert_syscall_category("brk",5)
@@ -469,7 +470,7 @@ def run_binary_analysis(binary):
     insert_syscall_category("access", 3)
     insert_syscall_category("read", 3)
     insert_syscall_category("newfstatat",3)
-    insert_syscall_category("pread64", 6)
+    insert_syscall_category("pread64", 3)
     insert_syscall_category("mmap", 6)
     insert_syscall_category("mprotect",6)
     run_binary_analysis_rabin2(container, binary, binary_id)
