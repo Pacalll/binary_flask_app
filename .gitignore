@@ -1,6 +1,7 @@
 /.venv/
 /.idea/
 /uploads
+/binaries
 binary_meta.db
 __pycache__/
 /static/syscall_overview_image*

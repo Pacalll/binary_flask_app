@@ -2,6 +2,8 @@ import json
 import os
 import sqlite3
 from datetime import datetime
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import parser
 import docker
